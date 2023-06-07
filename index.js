@@ -2,6 +2,10 @@ const express = require('express');
 const app = express();
 const fsProm = require('fs').promises;
 
+// * Middleware -> Codigo que se ejecuta antes de los endpoints
+// * Parsear todo lo que el cliente mande a JSON
+app.use(express.json());
+
 // * Endpoint de home
 app.get('/', (req, res) => {
   res.send('Endpoint de Home, si funciona la api');
@@ -49,11 +53,10 @@ app.get('/koders', async (req, res) => {
   const dbParsed = JSON.parse(db); // * Parseamos el JSON
   const { module } = req.query;
   const selectedKoder = dbParsed.koders.reduce((accum, current) => {
-    if (current.module.toLowerCase() === module.toLowerCase()) {
-      accum = { ...current };
-    }
-    return accum;
-  }, {});
+    let isModuleCoincident =
+      current.module.toLowerCase() === module.toLowerCase();
+    return isModuleCoincident ? [...accum, current] : [...accum];
+  }, []);
   res.json(selectedKoder); //* Regresamos un header de content-type -> application/json
 });
 
@@ -75,7 +78,7 @@ app.get('/mentors', async (req, res) => {
     let isModuleCoincident =
       current.module.toLowerCase() === module.toLowerCase();
     if (isAgeCoincident && isModuleCoincident) {
-      accum = { ...current };
+      accum = current;
     }
     return accum;
   }, {});
@@ -90,11 +93,58 @@ app.get('/mentors/:name', async (req, res) => {
   const { name } = req.params;
   const selectedMentor = dbParsed.mentors.reduce((accum, current) => {
     if (current.name.toLowerCase() === name.toLowerCase()) {
-      accum = { ...current };
+      accum = current;
     }
     return accum;
   }, {});
   res.json(selectedMentor);
+});
+
+// ! Post
+app.post('/koders', async (req, res) => {
+  const db = await fsProm.readFile('./koders.json', 'utf8');
+  const dbParsed = JSON.parse(db);
+  const koder = {
+    id: dbParsed.koders[dbParsed.koders.length - 1].id + 1,
+    ...req.body
+  };
+  dbParsed.koders.push(koder);
+  await fsProm.writeFile('./koders.json', JSON.stringify(dbParsed, '\n', 4));
+  res.json(koder);
+});
+
+// ! Patch
+app.patch('/koders/:id', async (req, res) => {
+  const db = await fsProm.readFile('./koders.json', 'utf8');
+  const dbParsed = JSON.parse(db);
+  const { id } = req.params;
+  const koderIndex = dbParsed.koders.findIndex(
+    (koder) => koder.id === parseInt(id)
+  );
+  const updatedKoder = {
+    ...dbParsed.koders[koderIndex],
+    ...req.body
+  };
+  dbParsed.koders[koderIndex] = updatedKoder;
+  await fsProm.writeFile('koders.json', JSON.stringify(dbParsed, '\n', 4));
+  res.json(updatedKoder);
+});
+
+// ! Delete
+app.delete('/koders/:id', async (req, res) => {
+  const db = await fsProm.readFile('./koders.json', 'utf8');
+  const dbParsed = JSON.parse(db);
+  const { id } = req.params;
+  const koderIndex = dbParsed.koders.findIndex(
+    (koder) => koder.id === parseInt(id)
+  );
+  console.log(koderIndex);
+  const koderDeleted =
+    koderIndex > 0
+      ? dbParsed.koders.splice(koderIndex, 1)
+      : { Error: 'El koder que intentas borrar no existe' };
+  await fsProm.writeFile('koders.json', JSON.stringify(dbParsed, '\n', 4));
+  res.json(koderDeleted);
 });
 
 app.listen(8080, () => {
