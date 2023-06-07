@@ -9,13 +9,13 @@
     {
       "name" : "Isra",
       "age" : "33",
-      "module" : "Backend",
+      "module" : "Javascript",
       "generation" : "25Js"
     },
     {
     "name" : "Vero",
     "age" : "26",
-    "module" : "Backend",
+    "module" : "SCRUM",
     "generation" : "25Js"
   }
     ],

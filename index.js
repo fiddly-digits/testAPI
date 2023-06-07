@@ -13,27 +13,6 @@ app.get('/', (req, res) => {
  * method -> Get
  * ruta -> /koders
  */
-
-app.get('/koders', async (req, res) => {
-  const db = await fsProm.readFile('./koders.json', 'utf8');
-  const dbParsed = JSON.parse(db); // * Parseamos el JSON
-  const { module } = req.query;
-  const selectedKoder = dbParsed.koders.reduce((accum, current) => {
-    if (current.module.toLowerCase() === module.toLowerCase()) {
-      accum = { ...current };
-    }
-    return accum;
-  }, {});
-  res.json(selectedKoder); //* Regresamos un header de content-type -> application/json
-});
-
-/*
- * Parametros
- * Query Params -> ?modulo=Backend
- * path params(identificador) -> :pathParam
- * /route/:pathParam
- */
-
 /*
 app.get('/koders', async (req, res) => {
   const db = await fsProm.readFile('./koders.json', 'utf8');
@@ -41,6 +20,13 @@ app.get('/koders', async (req, res) => {
   res.json(dbParsed.koders); //* Regresamos un header de content-type -> application/json
 });
 */
+
+/*
+ * Parametros
+ * Query Params -> ?modulo=Backend
+ * path params(identificador) -> :pathParam
+ * /route/:pathParam
+ */
 
 // ! Path Param
 app.get('/koders/:name', async (req, res) => {
@@ -60,17 +46,15 @@ app.get('/koders/:name', async (req, res) => {
 
 app.get('/koders', async (req, res) => {
   const db = await fsProm.readFile('./koders.json', 'utf8');
-  const dbParsed = JSON.parse(db);
+  const dbParsed = JSON.parse(db); // * Parseamos el JSON
   const { module } = req.query;
-  console.log('current: ', current.module);
-  console.log('Query', module);
   const selectedKoder = dbParsed.koders.reduce((accum, current) => {
     if (current.module.toLowerCase() === module.toLowerCase()) {
       accum = { ...current };
     }
     return accum;
   }, {});
-  res.json(selectedKoder);
+  res.json(selectedKoder); //* Regresamos un header de content-type -> application/json
 });
 
 /**
@@ -85,9 +69,12 @@ app.get('/koders', async (req, res) => {
 app.get('/mentors', async (req, res) => {
   const db = await fsProm.readFile('./koders.json', 'utf8');
   const dbParsed = JSON.parse(db);
-  const { age } = req.query;
+  const { age, module } = req.query;
   const selectedMentor = dbParsed.mentors.reduce((accum, current) => {
-    if (current.age === age) {
+    let isAgeCoincident = current.age === age;
+    let isModuleCoincident =
+      current.module.toLowerCase() === module.toLowerCase();
+    if (isAgeCoincident && isModuleCoincident) {
       accum = { ...current };
     }
     return accum;
